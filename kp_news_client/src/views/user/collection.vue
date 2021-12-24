@@ -1,0 +1,141 @@
+<template>
+  <div class="home">
+    <div class="head">
+      <van-nav-bar title="收藏" left-arrow @click-left="$router.back(-1)" />
+      <van-divider :style="{borderColor: 'red'}">新闻</van-divider>
+    </div>
+
+    <!-- 内容开始 -->
+    <div class="kobai"></div>
+
+    <van-swipe-cell v-for="(item, i) of CollectionItems" :key="i">
+      <van-cell
+        :border="false"
+        :title="item.title"
+        :label="item.time"
+        @click="jump(item.articleid,item.videoid)"
+      />
+      <template #right>
+        <van-button square type="danger" text="删除" @click="DelCollectionItems(item.id)" />
+      </template>
+    </van-swipe-cell>
+    <!-- 内容结束 -->
+  </div>
+</template>
+
+<script>
+import { getCollectionListArticle, DelCollection } from "@/api/collection.js";
+import { mapState } from "vuex"; // mapGetters
+
+export default {
+  data() {
+    return {
+      CollectionItems: ""
+    };
+  },
+  created() {
+    this.getCollectionItems();
+  },
+  computed: {
+    ...mapState("user", ["user", "isLogin"])
+  },
+  methods: {
+    async getCollectionItems() {
+      try {
+        let userid = { userid: this.user.id };
+        let result = await getCollectionListArticle(userid);
+        console.log(result.data);
+        if (result.code === "0") {
+          this.CollectionItems = result.data;
+        } else {
+          throw result.msg;
+        }
+      } catch (error) {
+        this.$dialog.alert({ title: "错误", message: error });
+      }
+    }, //=======================================
+
+    async DelCollectionItems(id) {
+      try {
+        let params = { id };
+        let result = await DelCollection(params);
+        console.log(result);
+        if (result.code === "0") {
+          this.$toast("删除成功！");
+          history.go(-1);
+          // this.loadData(); //重新加载购物车数据
+        } else {
+          throw result.msg;
+        }
+      } catch (error) {
+        this.$dialog.alert({ title: "错误", message: error });
+      }
+    }, //=======================================
+    async jump(articleid, videoid) {
+      console.log(articleid, videoid);
+      //判断是文章还是视频
+      if (videoid === 0) {
+        console.log("是新闻页面");
+        this.$router.push("/goods/detail/" + articleid);
+      } else if (articleid === 0) {
+        console.log("是视频页面");
+        // this.$router.push("/videos/detail/" + videoid);
+        this.$router.push({path: "/videos/detail/" + videoid});
+      }
+    }
+  }
+};
+</script>
+
+
+
+<style>
+.home {
+  width: 100%;
+  height: 100%;
+  background-color: white;
+}
+
+.head {
+  z-index: 10;
+  width: 100%;
+  height: 100px;
+  background-color: white;
+  position: fixed;
+}
+
+.van-divider {
+  font-size: 22px;
+  color: red;
+  margin-top: 5px;
+}
+
+.kobai {
+  width: 100%;
+  height: 50px;
+  margin-bottom: 50px;
+}
+
+.title-news {
+  width: 100%;
+  height: 100px;
+}
+
+.titles {
+  font-size: 20px;
+  margin: 0px 10px 0px 10px;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+.times {
+  float: left;
+  padding-right: 185px;
+  color: rgba(120, 120, 120, 0.6);
+  font-size: 15px;
+  margin: 10px 10px 0px 10px;
+}
+</style>
